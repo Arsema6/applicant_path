@@ -5,7 +5,7 @@ import requests
 from typing import Dict, Any
 from dotenv import load_dotenv
 
-from agents.groq_agent import FIELD_DEFINITIONS
+from agents.ai_agents import FIELD_DEFINITIONS
 
 # Load variables from .env
 load_dotenv()

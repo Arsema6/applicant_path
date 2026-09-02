@@ -91,7 +91,8 @@ The system supports voice input in:
 * Amharic
 * Afaan Oromo
 
-Groq Whisper is used to convert the applicant's voice note into text.
+Gemini is used to convert the applicant's voice note into text and to support
+multilingual extraction and follow-up processing.
 
 ---
 
@@ -333,10 +334,10 @@ Possible sources include:
 
 ### AI
 
-* Groq
-* Whisper for speech-to-text
-* `openai/gpt-oss-120b` for structured extraction
-* Multimodal vision model for document/image analysis
+* Google Gemini via the `google-genai` SDK
+* Gemini Flash for speech-to-text and structured extraction
+* Gemini multimodal vision for licence and business-photo evidence
+* Gemini preview TTS for spoken follow-up questions
 
 ### Processing
 
@@ -347,8 +348,7 @@ Possible sources include:
 
 ### Application Integration
 
-* Jotform
-* Jotform API
+* Jotform integration helpers are available for form synchronization
 
 ---
 
@@ -361,9 +361,15 @@ impact-application-ai/
 │
 ├── agents/
 │   ├── __init__.py
-│   └── groq_agent.py
+│   ├── ai_agents.py
+│   ├── form_integration.py
+│   ├── gemini_extraction_agent.py
+│   ├── google_speech_agent.py
+│   ├── groq_agent.py
+│   └── voice_followup_agent.py
 │
-├── form_integration.py
+├── models/
+│   └── schema.py
 │
 ├── .env
 ├── .gitignore
@@ -411,7 +417,7 @@ pip install -r requirements.txt
 Create a `.env` file:
 
 ```env
-GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 If Jotform API integration is enabled:
@@ -453,7 +459,14 @@ http://localhost:8501
 
 # 🧪 Testing
 
-For development, use the application's mock transcript option if available.
+Run the test suite with:
+
+```bash
+pytest
+```
+
+For development, you can also use the application's mock transcript option
+instead of uploading an audio file.
 
 Example:
 
