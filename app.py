@@ -1,5 +1,6 @@
 import json
 import io
+import hashlib
 import streamlit as st
 from dotenv import load_dotenv
 from PIL import Image
@@ -1644,6 +1645,8 @@ if st.session_state.evidence is not None:
 
 
         answer = None
+        voice_audio_id = None
+        auto_voice_submit = False
 
 
         # =================================================
@@ -1703,41 +1706,69 @@ if st.session_state.evidence is not None:
 
             if audio_obj:
 
-                try:
+                audio_bytes = audio_obj.getvalue()
+                voice_audio_id = hashlib.sha256(audio_bytes).hexdigest()
+                processed_audio_id = st.session_state.get(
+                    f"followup_processed_audio_{field}"
+                )
 
-                    answer = transcribe_audio(
-                        audio_obj.getvalue(),
-                        LANGUAGES[
-                            st.session_state.selected_language
-                        ],
-                        getattr(
-                            audio_obj,
-                            "name",
-                            "followup.wav",
-                        ),
-                    )
+                # Streamlit reruns whenever audio is submitted.  Use a
+                # content hash so the same recording is processed only
+                # once, while a new recording is handled automatically.
+                if voice_audio_id != processed_audio_id:
+                    try:
 
-                    st.caption(
-                        f"{T('heard')} {answer}"
-                    )
+                        answer = transcribe_audio(
+                            audio_bytes,
+                            LANGUAGES[
+                                st.session_state.selected_language
+                            ],
+                            getattr(
+                                audio_obj,
+                                "name",
+                                "followup.wav",
+                            ),
+                        )
 
-                except Exception as exc:
+                        st.caption(
+                            f"{T('heard')} {answer}"
+                        )
 
-                    st.error(
-                        f"{T('transcription_error')} {exc}"
-                    )
+                        # Voice mode is intentionally hands-off:
+                        # recording + successful transcription means
+                        # submit the answer without another click.
+                        auto_voice_submit = bool(
+                            answer and str(answer).strip()
+                        )
 
+                    except Exception as exc:
+
+                        st.error(
+                            f"{T('transcription_error')} {exc}"
+                        )
 
         # =================================================
         # SAVE FOLLOW-UP ANSWER
         # =================================================
 
-        if st.button(
-            T("save_followup"),
-            type="primary",
-            use_container_width=True,
-            key=f"save_followup_{field}",
-        ):
+        save_clicked = False
+
+        # Text mode keeps the explicit submit button. Voice mode is
+        # intentionally automatic after a successful transcription.
+        if mode == "text":
+            save_clicked = st.button(
+                T("save_followup"),
+                type="primary",
+                use_container_width=True,
+                key=f"save_followup_{field}",
+            )
+
+        should_save = save_clicked or auto_voice_submit
+
+        if auto_voice_submit:
+            st.info("✅ Voice answer captured. Processing and moving to the next question…")
+
+        if should_save:
 
             if (
                 answer is None
@@ -1902,6 +1933,11 @@ if st.session_state.evidence is not None:
                 st.session_state.evidence = (
                     new_evidence
                 )
+
+                if mode == "voice" and voice_audio_id:
+                    st.session_state[
+                        f"followup_processed_audio_{field}"
+                    ] = voice_audio_id
 
                 # The review form already has form_* widget state.
                 # Synchronize it from the updated evidence on the
@@ -2187,6 +2223,11 @@ if st.session_state.evidence is not None:
 
             st.session_state.pop(
                 f"save_followup_{field}",
+                None,
+            )
+
+            st.session_state.pop(
+                f"followup_processed_audio_{field}",
                 None,
             )
 
