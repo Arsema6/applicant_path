@@ -1,19 +1,27 @@
-from agents.gemini_extraction_agent import extract_evidence
+"""Manual extraction smoke test.
 
-
-transcript = """
-My name is Almaz Wolde. I have a spice mill in Bekoji Tera.
-We have eight employees, six of them are women.
-We produce and package berbere and sell it to shops in
-Bekoji and another town.
-
-I want support to expand the business and increase our
-production capacity.
-
-I don't remember our exact sales figures right now.
+Run this file directly with a configured ``GEMINI_API_KEY``. It is not part
+of the automated test suite because it calls the external model provider.
 """
 
 
-result = extract_evidence(transcript)
+def main() -> None:
+    from agents.ai_agents import extract_evidence
 
-print(result)
+    transcript = """
+    My name is Almaz Wolde. I have a spice mill in Bekoji Tera.
+    We have eight employees, six of them are women.
+    We produce and package berbere and sell it to shops in
+    Bekoji and another town.
+
+    I want support to expand the business and increase our
+    production capacity.
+
+    I don't remember our exact sales figures right now.
+    """
+
+    print(extract_evidence(transcript))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import Any, Optional, Literal
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel, Field, field_validator
 
 
 Status = Literal[
@@ -10,12 +12,34 @@ Status = Literal[
 ]
 
 
+class EvidenceCitation(BaseModel):
+    """Location in an input artifact that supports an extracted value."""
+
+    source_type: str
+    source_id: Optional[str] = None
+    excerpt: Optional[str] = None
+    page_number: Optional[int] = Field(default=None, ge=1)
+    bounding_box: Optional[tuple[float, float, float, float]] = None
+    recorded_at: Optional[datetime] = None
+
+    @field_validator("bounding_box")
+    @classmethod
+    def validate_bounding_box(
+        cls,
+        value: Optional[tuple[float, float, float, float]],
+    ) -> Optional[tuple[float, float, float, float]]:
+        if value is not None and any(coordinate < 0 or coordinate > 1 for coordinate in value):
+            raise ValueError("bounding_box coordinates must be between 0 and 1")
+        return value
+
+
 class EvidenceField(BaseModel):
     value: Optional[Any] = None
     status: Status = "missing"
     source: Optional[str] = None
-    confidence: Optional[float] = None
+    confidence: Optional[float] = Field(default=None, ge=0, le=1)
     note: Optional[str] = None
+    citation: Optional[EvidenceCitation] = None
 
 
 class ProductService(BaseModel):

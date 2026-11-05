@@ -5,7 +5,8 @@ import requests
 from typing import Dict, Any
 from dotenv import load_dotenv
 
-from agents.ai_agents import FIELD_DEFINITIONS
+from models.field_definitions import FIELD_DEFINITIONS
+from domain.contradictions import detect_contradictions
 
 # Load variables from .env
 load_dotenv()
@@ -571,6 +572,11 @@ def validate_evidence(evidence: dict) -> list[str]:
             numeric = _extract_numeric_value(value)
             if numeric is None or numeric < 0:
                 issues.append(f"{field}: value must be a non-negative number")
+
+    issues.extend(
+        f"{contradiction.code}: {contradiction.message}"
+        for contradiction in detect_contradictions(evidence)
+    )
 
     return issues
 
